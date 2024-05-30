@@ -879,7 +879,7 @@ module Change_Det (
 );
   wire x2, x1,x0,dummy0, dummy1, dummy2;
   D_Reg delay(
-    .D (1'b1),
+    .D (~RST & ~RST),
     .CLK (CLK),
     .RST (RST),
     .Q (x0),
