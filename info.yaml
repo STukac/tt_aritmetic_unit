@@ -1,17 +1,17 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
+  title:        "16 bit aritmetic unit"      # Project title
+  author:       "Sebastian Tukac"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
+  description:  "Aritmetic unit that can do adittion and subtraction with 16bit registers or 8bit x 8 bit multiplication"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     20000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
+  top_module:  "tt_um_16bit_Aritmetic_Unit"
   
   # List your project's source files here. Source files must be in ./src and you must list each source file separately, one per line:
   source_files:        
@@ -20,34 +20,34 @@ project:
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "data input pin 0"
+  ui[1]: "data input pin 1"
+  ui[2]: "data input pin 2"
+  ui[3]: "data input pin 3"
+  ui[4]: "data input pin 4"
+  ui[5]: "data input pin 5"
+  ui[6]: "data input pin 6"
+  ui[7]: "data input pin 7"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "data output pin 0"
+  uo[1]: "data output pin 1"
+  uo[2]: "data output pin 2"
+  uo[3]: "data output pin 3"
+  uo[4]: "data output pin 4"
+  uo[5]: "data output pin 5"
+  uo[6]: "data output pin 6"
+  uo[7]: "data output pin 7"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "output pin, error (uio[7] changed while working, unpredictable result)"
+  uio[1]: "input pin, needs to be set high to start"
+  uio[2]: "depending on mode: input read/write or adder input selection (reg A or data input pins), output multiplication finished"
+  uio[3]: "depending on mode: input register addres lower bit, output negative result"
+  uio[4]: "depending on mode: input register addres higher bit, output adder overflow"
+  uio[5]: "input pin, mode selection lower bit"
+  uio[6]: "input pin, mode selection higher bit"
+  uio[7]: "input pin, high if two's complement is used"
 
 # Do not change!
 yaml_version: 6
