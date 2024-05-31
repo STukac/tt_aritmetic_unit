@@ -5,7 +5,7 @@
 
 `default_nettype none
 
-module tt_um_example (
+module tt_um__16bit_Aritmetic_Unit (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
@@ -48,21 +48,21 @@ module tt_um_example (
 
 //////////////////////////////////////////////////////////////
 // SINC INPUT
-  wire [7:0] UIO_IN, DUMMY0;
+  wire [7:0] S_UIO_IN, DUMMY0;
   
   Reg8bit r_input(
     .D (uio_in),
     .RST (RST),
     .CLK (r_e_clk),
-    .Q (UIO_IN),
+    .Q (S_UIO_IN),
     .NQ (DUMMY0)
   );
 
 /////////////////////////////////////////////////////////////
 // DETECT CHANGE IN COMPLEMENT -> SETS ERROR
   Change_Det C_Change (
-    .I (UIO_IN[7]),
-    .E (UIO_IN[1]),
+    .I (S_UIO_IN[7]),
+    .E (S_UIO_IN[1]),
     .RST (RST),
     .CLK (r_e_clk),
     .ERR (uio_out[0])
@@ -73,21 +73,21 @@ module tt_um_example (
 // UIO_IN
   wire C,LDR, ADD, SUB, MUL,S,ERR,P,N,F,UA,RW,REG1, REG0 ;
   
-  assign C = UIO_IN[7];
-  assign LDR = ~(UIO_IN[6] | UIO_IN[5]);
-  assign ADD = ~UIO_IN[6] & UIO_IN[5];
-  assign SUB = UIO_IN[6] & ~UIO_IN[5];
-  assign MUL = UIO_IN[6] & UIO_IN[5];
-  assign REG1 = UIO_IN[4];
-  assign REG0 = UIO_IN[3];
-  assign RW = UIO_IN[2];
-  assign UA = UIO_IN[2];
-  assign S=UIO_IN[1];
-  assign ERR=UIO_IN[0];
+  assign C = S_UIO_IN[7];
+  assign LDR = ~(S_UIO_IN[6] | S_UIO_IN[5]);
+  assign ADD = ~S_UIO_IN[6] & S_UIO_IN[5];
+  assign SUB = S_UIO_IN[6] & ~S_UIO_IN[5];
+  assign MUL = S_UIO_IN[6] & S_UIO_IN[5];
+  assign REG1 = S_UIO_IN[4];
+  assign REG0 = S_UIO_IN[3];
+  assign RW = S_UIO_IN[2];
+  assign UA = S_UIO_IN[2];
+  assign S=S_UIO_IN[1];
+  assign ERR=S_UIO_IN[0];
   
   
 //uio_out
-  assign uio_out[7:1] = {UIO_IN[7:5],P,N,F,UIO_IN[1]};
+  assign uio_out[7:1] = {S_UIO_IN[7:5],P,N,F,S_UIO_IN[1]};
   
 
 
@@ -195,8 +195,8 @@ module tt_um_example (
 // MUX oF REG B
   wire [15:0] M2;
   MUX64x16 mux2 (
-    .D ({ui_in,{8{1'b0}}}),
-    .C ({{8{1'b0}},ui_in}),
+    .D ({ui_in,Reg_B[7:0]}),
+    .C ({Reg_B[15:8],ui_in}),
     .B (Reg_B0),
     .A (Reg_B0),
     .a1 (LDR),
@@ -634,11 +634,29 @@ module JK(
   input wire J, K, SET, RST, CLK,
   output wire Q, NQ
 );
-  wire x0, x1;
-  assign x0 = ~(J & CLK & NQ);
-  assign x1 = ~(K & CLK & Q);
-  assign Q = ~(SET & x0 & NQ);
-  assign NQ = ~(RST & x1 & Q);
+  reg Q0;
+  always @ (posedge CLK)
+    begin 
+      if (RST)
+        Q0 <= 1'b0;
+      else if(SET)
+        Q0 <= 1'b1;
+      else
+        case ({J,K})
+          2'b00 : Q0 <= Q0;
+          2'b01 : Q0 <= 1'b0;
+          2'b10 : Q0 <= 1'b1;
+          2'b11 : Q0 <= ~Q0;
+        endcase
+        
+    end
+  assign Q = Q0;
+  assign NQ = ~Q0;
+//  wire x0, x1;
+//  assign x0 = ~(J & CLK & NQ);
+//  assign x1 = ~(K & CLK & Q);
+//  assign Q = ~(SET & x0 & NQ);
+//  assign NQ = ~(RST & x1 & Q);
   
 endmodule
 
@@ -716,13 +734,25 @@ module D_Reg(
   input wire D, RST, CLK,
   output wire Q, NQ
 );
-  wire x0, x1;
+  reg Q0;
+  always @ (posedge CLK)
+    begin 
+      if (RST)
+        Q0 <= 1'b0;
+      else
+        Q0 <= D;
+    end
+  assign Q = Q0;
+  assign NQ = ~Q0;
+ 
   
-  assign x0 = ~(D & ~RST & CLK);
-  assign x1 = ~(x0 & CLK);
+//  wire x0, x1;
   
-  assign Q = ~(NQ & x1);
-  assign NQ = ~(Q & x0);
+//  assign x0 = ~(D & ~RST & CLK);
+//  assign x1 = ~(x0 & CLK);
+  
+// assign Q = ~(NQ & x1);
+//  assign NQ = ~(Q & x0);
     
 endmodule
 
@@ -896,11 +926,11 @@ module Change_Det (
   assign x2 = x1 ^- (I*E);
   
   JK Error(
-    .J (x2),
+    .J (x2 & x0),
     .K (1'b0),
     .SET (1'b0),
     .RST (RST),
-    .CLK (x2),
+    .CLK (x2 & x0),
     .Q (ERR),
     .NQ (dummy2)
   );
