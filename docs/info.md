@@ -16,6 +16,7 @@ This is a 16 bit adder and subtractor that can also perform 8 bit by 8 bit multi
 The IO pins are used to setup the circuit, start it and get feedback:
 
 | C | MODE | d2 | d1 | d0 | S | ERR |
+|---|------|----|----|----|---|-----|
 |   | LDR  |   REG   | RW |   |     |
 |   | ZBR  | P  | N  | UA |   |     |
 |   | SUB  | P  | N  | UA |   |     |
