@@ -15,6 +15,10 @@ module tt_um__16bit_Aritmetic_Unit (
     input  wire       clk,      // clock
     input  wire       rst_n     // reset_n - low to reset
 );
+  
+
+// List all unused inputs to prevent warnings
+  wire _unused = &{ena, 1'b0};
 /////////////////////////////////////////////////////////////
 // EDGE DETECTION
   wire r_e_clk, f_e_clk, RST, dummy0;
@@ -47,7 +51,7 @@ module tt_um__16bit_Aritmetic_Unit (
   assign uio_oe = {1'b0 ,1'b0 ,1'b0 , uio_in[6] | uio_in[5], uio_in[6] | uio_in[5],uio_in[6] & uio_in[5],1'b0 ,1'b1};
 
 //////////////////////////////////////////////////////////////
-// SINC INPUT
+// SINC INPUT uio_in
   wire [7:0] S_UIO_IN, DUMMY0;
   
   Reg8bit r_input(
@@ -55,6 +59,18 @@ module tt_um__16bit_Aritmetic_Unit (
     .RST (RST),
     .CLK (r_e_clk),
     .Q (S_UIO_IN),
+    .NQ (DUMMY0)
+  );
+  
+//////////////////////////////////////////////////////////////
+// SINC INPUT ui_in
+  wire [7:0] S_UI_IN, DUMMY0;
+  
+  Reg8bit i_input(
+    .D (ui_in),
+    .RST (RST),
+    .CLK (S),
+    .Q (S_UI_IN),
     .NQ (DUMMY0)
   );
 
@@ -84,13 +100,10 @@ module tt_um__16bit_Aritmetic_Unit (
   assign UA = S_UIO_IN[2];
   assign S=S_UIO_IN[1];
   assign ERR=S_UIO_IN[0];
-  
-  
+
 //uio_out
   assign uio_out[7:1] = {S_UIO_IN[7:5],P,N,F,S_UIO_IN[1]};
   
-
-
 ////////////////////////////////////////////////////////////
 // COUNTER 8bit
   wire [7:0] COUNT, CDUMMY;
@@ -101,18 +114,26 @@ module tt_um__16bit_Aritmetic_Unit (
   assign F = COUNT[7];
   COUNTER8bit Counter(
     .RST (RST | ~S),
-    .CLK (clk & S & ( MUL& ~F | (ADD | SUB) & ~CNT16)),
+    .CLK (clk & CNT_EN),
     .Q (COUNT),
     .NQ (CDUMMY)
   );
   
+  wire CNT_EN, dummyEN;
   
+  D_Reg cnt_en (
+    .D (S & ( MUL& ~F | (ADD | SUB) & ~CNT16)),
+    .RST (RST),
+    .CLK (clk),
+    .Q (CNT_EN),
+    .NQ (dummyEN)
+  );
   
 ////////////////////////////////////////////////////////////
 // MUX OF BIT SELECTOR
   wire MUL_MUX;
   MUX8x1 muxS(
-    .I (ui_in),
+    .I (S_UI_IN),
     .a (COUNT[6:4]),
     .o (MUL_MUX)
   );
@@ -121,8 +142,8 @@ module tt_um__16bit_Aritmetic_Unit (
 // MUX OF REG A
   wire [15:0] Reg_A, M0;
   MUX64x16 mux0 (
-    .D ({ui_in, Reg_A [7:0]}),
-    .C ({Reg_A [15:8],ui_in}),
+    .D ({S_UI_IN, Reg_A [7:0]}),
+    .C ({Reg_A [15:8],S_UI_IN}),
     .B ({Reg_A [14:0], 1'b0}),
     .A (Reg_A),
     .a1 (LDR),
@@ -148,12 +169,12 @@ module tt_um__16bit_Aritmetic_Unit (
 // MUX OF ADDER
     wire [15:0] M1;
   wire neg;
-  assign neg = SUB | MUL & ui_in[7] & C & BF; 
+  assign neg = SUB | MUL & S_UI_IN[7] & C & BF; 
   MUX64x16 mux1 (
     .D (~Reg_A & {16{(MUL_MUX | ~ MUL)}}),
     .C (Reg_A & {16{(MUL_MUX | ~ MUL)}}),
-    .B (~{{8{C & ui_in[7]}},ui_in}),
-    .A ({{8{C & ui_in[7]}},ui_in}),
+    .B (~{{8{C & S_UI_IN[7]}},S_UI_IN}),
+    .A ({{8{C & S_UI_IN[7]}},S_UI_IN}),
     .a1 (UA & (ADD | SUB) | MUL),
     .a0 (neg),
     .O (M1)
@@ -174,9 +195,7 @@ module tt_um__16bit_Aritmetic_Unit (
   
   assign P = Cout^(C & SUM[15]);
   assign N = SUM[15] & ( SUB | C& ( MUL | ADD));
-  
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, 1'b0};
+
 
 ////////////////////////////////////////////////////////////
 // REG B'
@@ -195,8 +214,8 @@ module tt_um__16bit_Aritmetic_Unit (
 // MUX oF REG B
   wire [15:0] M2;
   MUX64x16 mux2 (
-    .D ({ui_in,Reg_B[7:0]}),
-    .C ({Reg_B[15:8],ui_in}),
+    .D ({S_UI_IN,Reg_B[7:0]}),
+    .C ({Reg_B[15:8],S_UI_IN}),
     .B (Reg_B0),
     .A (Reg_B0),
     .a1 (LDR),
@@ -536,66 +555,83 @@ module ADDER8bit(
   output wire [7:0] S,
   output wire Cout
 );
-  wire [8:0] C;
+//  wire [8:0] Carry;
+  wire c1, c2, c3, c4 ,c5, c6, c7;
   
-  assign C[0]=Cin;
-  assign Cout=C[8];
+//  assign Carry[0]=Cin;
+//  assign Cout=Carry[8];
   
   ADDER2bit a0(
     .A (A[0]),
     .B (B[0]),
-    .Cin (C[0]),
+    .Cin (Cin),
+//    .Cin (Carry[0]),
     .S (S[0]),
-    .Cout (C[1])
+    .Cout (c1)
+//    .Cout (Carry[1])
   );
   ADDER2bit a1(
     .A (A[1]),
     .B (B[1]),
-    .Cin (C[1]),
+//    .Cin (Carry[1]),
+    .Cin (c1),
     .S (S[1]),
-    .Cout (C[2])
+    .Cout (c2)
+    //    .Cout (Carry[2])
   );
   ADDER2bit a2(
     .A (A[2]),
     .B (B[2]),
-    .Cin (C[2]),
+//    .Cin (Carry[2]),
+    .Cin (c2),
     .S (S[2]),
-    .Cout (C[3])
+    .Cout (c3)
+    //    .Cout (Carry[3])
   );
   ADDER2bit a3(
     .A (A[3]),
     .B (B[3]),
-    .Cin (C[3]),
+//    .Cin (Carry[3]),
+    .Cin (c3),
     .S (S[3]),
-    .Cout (C[4])
+//    .Cout (Carry[4])
+    .Cout (c4)
   );
   ADDER2bit a4(
     .A (A[4]),
     .B (B[4]),
-    .Cin (C[4]),
+//    .Cin (Carry[4]),
+    .Cin (c4),
     .S (S[4]),
-    .Cout (C[5])
+//    .Cout (Carry[5])
+    .Cout (c5)
   );
   ADDER2bit a5(
     .A (A[5]),
     .B (B[5]),
-    .Cin (C[5]),
+//    .Cin (Carry[5]),
+    .Cin (c5),
     .S (S[5]),
-    .Cout (C[6])
+//    .Cout (Carry[6])
+    .Cout (c6)
   );
   ADDER2bit a6(
     .A (A[6]),
     .B (B[6]),
-    .Cin (C[6]),
+//    .Cin (Carry[6]),
+    .Cin (c6),
     .S (S[6]),
-    .Cout (C[7])
+//    .Cout (Carry[7])
+    .Cout (c7)
   );
   ADDER2bit a7(
     .A (A[7]),
     .B (B[7]),
-    .Cin (C[7]),
+//    .Cin (Carry[7]),
+    .Cin (c7),
     .S (S[7]),
-    .Cout (C[8])
+    .Cout (Cout)
+//    .Cout (Carry[8])
   );
 endmodule
 
@@ -637,9 +673,9 @@ module JK(
   reg Q0;
   always @ (posedge CLK)
     begin 
-      if (RST)
+      if (~RST)
         Q0 <= 1'b0;
-      else if(SET)
+      else if(~SET)
         Q0 <= 1'b1;
       else
         case ({J,K})
@@ -665,63 +701,68 @@ module COUNTER4bit(
   input wire RST, CLK,
   output wire [3:0] Q, NQ
 );
+  wire Q0,Q1,Q2,Q3,NQ0,NQ1,NQ2,NQ3;
   JK jk0(
     .J (1'b1),
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
     .CLK (CLK),
-    .Q (Q[0]),
-    .NQ (NQ[0])
+    .Q (Q0),
+    .NQ (NQ0)
   );
   JK jk1(
     .J (1'b1),
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q[0]),
-    .Q (Q[1]),
-    .NQ (NQ[1])
+    .CLK (Q0),
+    .Q (Q1),
+    .NQ (NQ1)
   );
   JK jk2(
     .J (1'b1),
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q[1]),
-    .Q (Q[2]),
-    .NQ (NQ[2])
+    .CLK (Q1),
+    .Q (Q2),
+    .NQ (NQ2)
   );
   JK jk3(
     .J (1'b1),
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q[2]),
-    .Q (Q[3]),
-    .NQ (NQ[3])
+    .CLK (Q2),
+    .Q (Q3),
+    .NQ (NQ3)
   );
-    
+  assign Q = {Q3,Q2,Q1,Q0};
+  assign NQ = {NQ3,NQ2,NQ1,NQ0};
 endmodule
 
 module COUNTER8bit(
   input wire RST, CLK,
   output wire [7:0] Q, NQ
 );
+  wire [3:0] Q1,Q0,NQ1,NQ0;
   wire q;
   COUNTER4bit c0(
     .RST (RST),
     .CLK (CLK),
-    .Q (Q[3:0]),
-    .NQ (NQ[3:0])
+    .Q (Q0),
+    .NQ (NQ0)
   );
+  assign q= Q0[3];
   COUNTER4bit c1(
     .RST (RST),
-    .CLK (Q[3]),
-    .Q (Q[7:4]),
-    .NQ (NQ[7:4])
+    .CLK (q),
+    .Q (Q1),
+    .NQ (NQ1)
   );
-  
+  assign Q = {Q1,Q0};
+  assign NQ = {NQ1,NQ0};  
     
 endmodule
 
