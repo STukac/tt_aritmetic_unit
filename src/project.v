@@ -5,7 +5,7 @@
 
 `default_nettype none
 
-module tt_um_example (
+module tt_um_16bit_Aritmetic_Unit (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
@@ -64,14 +64,14 @@ module tt_um_example (
   
 //////////////////////////////////////////////////////////////
 // SINC INPUT ui_in
-  wire [7:0] S_UI_IN, DUMMY0;
+  wire [7:0] S_UI_IN, DUMMY1;
   
   Reg8bit i_input(
     .D (ui_in),
     .RST (RST),
     .CLK (S),
     .Q (S_UI_IN),
-    .NQ (DUMMY0)
+    .NQ (DUMMY1)
   );
 
 /////////////////////////////////////////////////////////////
@@ -155,13 +155,13 @@ module tt_um_example (
 ////////////////////////////////////////////////////////////
 // REG A
    
-  wire [15:0] DUMMY1;
+  wire [15:0] DUMMY2;
   Reg16bit REG_A(
     .D (M0),
     .RST (RST),
     .CLK (RW & ~REG1 & LDR & S | CNT16 & clk & ~LDR),
     .Q (Reg_A),
-    .NQ (DUMMY1)
+    .NQ (DUMMY2)
     
   );
   
@@ -199,13 +199,13 @@ module tt_um_example (
 
 ////////////////////////////////////////////////////////////
 // REG B'
-  wire [15:0] Reg_B0, DUMMY2;
+  wire [15:0] Reg_B0, DUMMY3;
   Reg16bit REG_B0(
     .D (SUM),
     .RST (RST),
     .CLK (CNT14),
     .Q (Reg_B0),
-    .NQ (DUMMY2)
+    .NQ (DUMMY3)
     
   );
 
@@ -225,26 +225,26 @@ module tt_um_example (
   
 ////////////////////////////////////////////////////////////
 // REG B
-  wire [15:0] DUMMY3;
+  wire [15:0] DUMMY4;
   Reg16bit REG_B (
     .D (M2),
     .RST (RST),
     .CLK (RW & REG1 & LDR & S +CNT16 & r_e_clk & ~LDR),
     .Q (Reg_B),
-    .NQ (DUMMY3)
+    .NQ (DUMMY4)
   
   );
   
   
 ////////////////////////////////////////////////////////////
 // REG OF READ
-  wire [1:0] READ, DUMMY4;
+  wire [1:0] READ, DUMMY5;
   Reg2bit REG_R (
     .D ({REG1,REG0}),
     .RST (RST),
     .CLK (clk & ~RW),
     .Q (READ),
-    .NQ (DUMMY4)
+    .NQ (DUMMY5)
   ); 
   
 
