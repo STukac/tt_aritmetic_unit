@@ -5,7 +5,8 @@
 
 `default_nettype none
 
-module tt_um_example (
+
+module tt_um_16bit_Aritmetic_Unit (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
@@ -30,18 +31,18 @@ module tt_um_example (
     .O (r_e_clk)
   );
   
-  F_edge f_clk (
-    .I (clk),
-    .RST (RST),
-    .CLK (clk),
-    .O (f_e_clk)
-  );
+//  F_edge f_clk (
+//    .I (clk),
+//    .RST (RST),
+//    .CLK (clk),
+//    .O (f_e_clk)
+//  );
 //////////////////////////////////////////////////////////////
 // RESET
   D_Reg Reset (
     .D (~rst_n),
     .RST (1'b0),
-    .CLK (r_e_clk),
+    .CLK (clk),
     .Q (RST),
     .NQ (dummy0)
   );
@@ -57,7 +58,7 @@ module tt_um_example (
   Reg8bit r_input(
     .D (uio_in),
     .RST (RST),
-    .CLK (r_e_clk),
+    .CLK (clk),
     .Q (S_UIO_IN),
     .NQ (DUMMY0)
   );
@@ -80,8 +81,8 @@ module tt_um_example (
     .I (S_UIO_IN[7]),
     .E (S_UIO_IN[1]),
     .RST (RST),
-    .CLK (r_e_clk),
-    .ERR (uio_out[0])
+    .CLK (clk),
+    .ERR (ERR)
   );
   
   
@@ -99,10 +100,10 @@ module tt_um_example (
   assign RW = S_UIO_IN[2];
   assign UA = S_UIO_IN[2];
   assign S=S_UIO_IN[1];
-  assign ERR=S_UIO_IN[0];
+//  assign ERR=S_UIO_IN[0];
 
 //uio_out
-  assign uio_out[7:1] = {S_UIO_IN[7:5],P,N,F,S_UIO_IN[1]};
+  assign uio_out[7:0] = {S_UIO_IN[7:5],P,N,F,S,ERR};
   
 ////////////////////////////////////////////////////////////
 // COUNTER 8bit
@@ -167,7 +168,7 @@ module tt_um_example (
   
 ////////////////////////////////////////////////////////////
 // MUX OF ADDER
-    wire [15:0] M1;
+  wire [15:0] M1;
   wire neg;
   assign neg = SUB | MUL & S_UI_IN[7] & C & BF; 
   MUX64x16 mux1 (
@@ -193,8 +194,8 @@ module tt_um_example (
     .Cout (Cout)
   );
   
-  assign P = Cout^(C & SUM[15]);
-  assign N = SUM[15] & ( SUB | C& ( MUL | ADD));
+  assign P = C & (ADD | SUB) & ( Reg_B[15] ^- M1[15] ^- SUM[15]) | ~C & ADD & Cout;
+  assign N = C & SUM[15] | SUB & ~C & ~Cout;
 
 
 ////////////////////////////////////////////////////////////
@@ -229,7 +230,7 @@ module tt_um_example (
   Reg16bit REG_B (
     .D (M2),
     .RST (RST),
-    .CLK (RW & REG1 & LDR & S +CNT16 & r_e_clk & ~LDR),
+    .CLK (RW & REG1 & LDR & S | CNT16 & clk & ~LDR),
     .Q (Reg_B),
     .NQ (DUMMY4)
   
@@ -242,7 +243,7 @@ module tt_um_example (
   Reg2bit REG_R (
     .D ({REG1,REG0}),
     .RST (RST),
-    .CLK (clk & ~RW),
+    .CLK (S & ~RW),
     .Q (READ),
     .NQ (DUMMY5)
   ); 
@@ -272,7 +273,6 @@ module MUX2x1(
   input wire a,
   output wire o
 );
-  
   assign o = a & I[1] | ~a & I[0];
   
 endmodule
@@ -531,11 +531,12 @@ module MUX64x16(
 endmodule
 
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Adders
 
-module ADDER2bit (
+module ADDER1bit (
   input wire A, B, Cin,
   output wire S, Cout
 );
@@ -549,6 +550,7 @@ module ADDER2bit (
   
 endmodule
 
+
 module ADDER8bit(
   input wire [7:0] A,B,
   input wire Cin,
@@ -561,7 +563,7 @@ module ADDER8bit(
 //  assign Carry[0]=Cin;
 //  assign Cout=Carry[8];
   
-  ADDER2bit a0(
+  ADDER1bit a0(
     .A (A[0]),
     .B (B[0]),
     .Cin (Cin),
@@ -570,7 +572,7 @@ module ADDER8bit(
     .Cout (c1)
 //    .Cout (Carry[1])
   );
-  ADDER2bit a1(
+  ADDER1bit a1(
     .A (A[1]),
     .B (B[1]),
 //    .Cin (Carry[1]),
@@ -579,7 +581,7 @@ module ADDER8bit(
     .Cout (c2)
     //    .Cout (Carry[2])
   );
-  ADDER2bit a2(
+  ADDER1bit a2(
     .A (A[2]),
     .B (B[2]),
 //    .Cin (Carry[2]),
@@ -588,7 +590,7 @@ module ADDER8bit(
     .Cout (c3)
     //    .Cout (Carry[3])
   );
-  ADDER2bit a3(
+  ADDER1bit a3(
     .A (A[3]),
     .B (B[3]),
 //    .Cin (Carry[3]),
@@ -597,7 +599,7 @@ module ADDER8bit(
 //    .Cout (Carry[4])
     .Cout (c4)
   );
-  ADDER2bit a4(
+  ADDER1bit a4(
     .A (A[4]),
     .B (B[4]),
 //    .Cin (Carry[4]),
@@ -606,7 +608,7 @@ module ADDER8bit(
 //    .Cout (Carry[5])
     .Cout (c5)
   );
-  ADDER2bit a5(
+  ADDER1bit a5(
     .A (A[5]),
     .B (B[5]),
 //    .Cin (Carry[5]),
@@ -615,7 +617,7 @@ module ADDER8bit(
 //    .Cout (Carry[6])
     .Cout (c6)
   );
-  ADDER2bit a6(
+  ADDER1bit a6(
     .A (A[6]),
     .B (B[6]),
 //    .Cin (Carry[6]),
@@ -624,7 +626,7 @@ module ADDER8bit(
 //    .Cout (Carry[7])
     .Cout (c7)
   );
-  ADDER2bit a7(
+  ADDER1bit a7(
     .A (A[7]),
     .B (B[7]),
 //    .Cin (Carry[7]),
@@ -662,6 +664,7 @@ module ADDER16bit(
 endmodule
 
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Counter
@@ -671,20 +674,20 @@ module JK(
   output wire Q, NQ
 );
   reg Q0;
-  always @ (posedge CLK)
-    begin 
+  always @ (posedge CLK or negedge RST)
+    begin
       if (~RST)
         Q0 <= 1'b0;
       else if(~SET)
         Q0 <= 1'b1;
-      else
+      else begin 
         case ({J,K})
           2'b00 : Q0 <= Q0;
           2'b01 : Q0 <= 1'b0;
           2'b10 : Q0 <= 1'b1;
           2'b11 : Q0 <= ~Q0;
         endcase
-        
+      end
     end
   assign Q = Q0;
   assign NQ = ~Q0;
@@ -707,7 +710,7 @@ module COUNTER4bit(
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (CLK),
+    .CLK (~CLK),
     .Q (Q0),
     .NQ (NQ0)
   );
@@ -716,7 +719,7 @@ module COUNTER4bit(
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q0),
+    .CLK (~Q0),
     .Q (Q1),
     .NQ (NQ1)
   );
@@ -725,7 +728,7 @@ module COUNTER4bit(
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q1),
+    .CLK (~Q1),
     .Q (Q2),
     .NQ (NQ2)
   );
@@ -734,13 +737,14 @@ module COUNTER4bit(
     .K (1'b1),
     .SET (1'b1),
     .RST (~RST),
-    .CLK (Q2),
+    .CLK (~Q2),
     .Q (Q3),
     .NQ (NQ3)
   );
   assign Q = {Q3,Q2,Q1,Q0};
   assign NQ = {NQ3,NQ2,NQ1,NQ0};
 endmodule
+
 
 module COUNTER8bit(
   input wire RST, CLK,
@@ -765,6 +769,7 @@ module COUNTER8bit(
   assign NQ = {NQ1,NQ0};  
     
 endmodule
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -818,6 +823,7 @@ module Reg2bit(
     .NQ (NQ[1])
   );
 endmodule
+
 
 module Reg4bit(
   input wire [3:0] D,
@@ -902,9 +908,27 @@ module Reg16bit(
 endmodule
 
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Edge detection
+
+//module F_edge (
+//  input wire I, RST, CLK,
+//  output wire O
+//);
+//  wire Q, dummy;
+//  D_Reg d(
+//    .D (I),
+//    .RST (RST),
+//    .CLK (CLK),
+//    .Q (Q),
+//    .NQ (dummy)
+//  );
+//  assign O = Q & ~I;
+  
+//endmodule
+
 
 module R_edge (
   input wire I, RST, CLK,
@@ -923,22 +947,6 @@ module R_edge (
 endmodule
 
 
-module F_edge (
-  input wire I, RST, CLK,
-  output wire O
-);
-  wire Q, dummy;
-  D_Reg d(
-    .D (I),
-    .RST (RST),
-    .CLK (CLK),
-    .Q (Q),
-    .NQ (dummy)
-  );
-  assign O = Q & ~I;
-  
-endmodule
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -950,7 +958,7 @@ module Change_Det (
 );
   wire x2, x1,x0,dummy0, dummy1, dummy2;
   D_Reg delay(
-    .D (~RST & ~RST),
+    .D (~RST),
     .CLK (CLK),
     .RST (RST),
     .Q (x0),
@@ -958,27 +966,28 @@ module Change_Det (
   );
   
   D_Reg last(
-    .D (I & E),
+    .D (I),
     .CLK (CLK),
     .RST (RST),
     .Q (x1),
     .NQ (dummy1)
   );
-  assign x2 = x1 ^- (I*E);
+  assign x2 = x1 ^- (I & E);
   
   JK Error(
     .J (x2 & x0),
     .K (1'b0),
     .SET (1'b0),
-    .RST (RST),
+    .RST (~RST),
     .CLK (x2 & x0),
     .Q (ERR),
     .NQ (dummy2)
   );
   
-endmodule 
+endmodule
   
 
 
     
+
 
