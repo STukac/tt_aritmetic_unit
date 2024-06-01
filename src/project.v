@@ -930,8 +930,8 @@ module F_edge (
     .NQ (dummy)
   );
   assign O = Q & ~I;
-  
-//endmodule
+  wire _unused = &{1'b0, dummy,1'b0};
+endmodule
 
 
 module R_edge (
