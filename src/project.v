@@ -19,11 +19,15 @@ module tt_um_example (
   
 
 // List all unused inputs to prevent warnings
-  wire _unused = &{ena, 1'b0};
+    wire _unused = &{1'b0,ena, 
+                     r_e_clk, f_e_clk, 
+                     dummy0, dummyEN,
+                     DUMMY0, DUMMY1, DUMM2, DUMMY3, DUMMY5, DUMM5, CDUMMY,
+                     S_UIO_IN[0], COUNT[0], 
+                     1'b0};
 /////////////////////////////////////////////////////////////
 // EDGE DETECTION
   wire r_e_clk, f_e_clk, RST, dummy0;
- 
   R_edge r_clk (
     .I (clk),
     .RST (RST),
@@ -943,7 +947,7 @@ module R_edge (
     .NQ (NQ)
   );
   assign O = NQ & I;
-  
+  wire _unused = &{1'b0, dummy,1'b0};
 endmodule
 
 
@@ -983,7 +987,7 @@ module Change_Det (
     .Q (ERR),
     .NQ (dummy2)
   );
-  
+    wire _unused = &{1'b0, dummy0, dummy1, dummy3, 1'b0};
 endmodule
   
 
