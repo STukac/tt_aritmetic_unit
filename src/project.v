@@ -22,7 +22,7 @@ module tt_um_example (
     wire _unused = &{1'b0,ena, 
                      r_e_clk, f_e_clk, 
                      dummy0, dummyEN,
-                     DUMMY0, DUMMY1, DUMM2, DUMMY3, DUMMY5, DUMM5, CDUMMY,
+                     DUMMY0, DUMMY1, DUMMY2, DUMMY3, DUMMY4, DUMMY5, CDUMMY,
                      S_UIO_IN[0], COUNT[0], 
                      1'b0};
 /////////////////////////////////////////////////////////////
@@ -987,7 +987,7 @@ module Change_Det (
     .Q (ERR),
     .NQ (dummy2)
   );
-    wire _unused = &{1'b0, dummy0, dummy1, dummy3, 1'b0};
+    wire _unused = &{1'b0, dummy0, dummy1, dummy2, 1'b0};
 endmodule
   
 
