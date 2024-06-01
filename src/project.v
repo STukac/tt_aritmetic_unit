@@ -22,7 +22,7 @@ module tt_um_example (
   wire _unused = &{ena, 1'b0};
 /////////////////////////////////////////////////////////////
 // EDGE DETECTION
-  wire  RST;
+  wire r_e_clk, f_e_clk, RST, dummy0;
  
   R_edge r_clk (
     .I (clk),
@@ -44,7 +44,7 @@ module tt_um_example (
     .RST (1'b0),
     .CLK (clk),
     .Q (RST),
-      .NQ ( )
+    .NQ (dummy0)
   );
   
 //////////////////////////////////////////////////////////////
@@ -53,26 +53,26 @@ module tt_um_example (
 
 //////////////////////////////////////////////////////////////
 // SINC INPUT uio_in
-  wire [7:0] S_UIO_IN;
+  wire [7:0] S_UIO_IN, DUMMY0;
   
   Reg8bit r_input(
     .D (uio_in),
     .RST (RST),
     .CLK (clk),
     .Q (S_UIO_IN),
-      .NQ ( )
+    .NQ (DUMMY0)
   );
   
 //////////////////////////////////////////////////////////////
 // SINC INPUT ui_in
-  wire [7:0] S_UI_IN;
+  wire [7:0] S_UI_IN, DUMMY1;
   
   Reg8bit i_input(
     .D (ui_in),
     .RST (RST),
     .CLK (S),
     .Q (S_UI_IN),
-      .NQ ( )
+    .NQ (DUMMY1)
   );
 
 /////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ module tt_um_example (
   
 ////////////////////////////////////////////////////////////
 // COUNTER 8bit
-  wire [7:0] COUNT;
+  wire [7:0] COUNT, CDUMMY;
   wire CNT16, CNT14, BF;
   assign CNT16 = COUNT[4];
   assign CNT14 = COUNT[3] & COUNT[2] & COUNT[1];
@@ -117,17 +117,17 @@ module tt_um_example (
     .RST (RST | ~S),
     .CLK (clk & CNT_EN),
     .Q (COUNT),
-      .NQ ( )
+    .NQ (CDUMMY)
   );
   
-  wire CNT_EN;
+  wire CNT_EN, dummyEN;
   
   D_Reg cnt_en (
     .D (S & ( MUL& ~F | (ADD | SUB) & ~CNT16)),
     .RST (RST),
     .CLK (clk),
     .Q (CNT_EN),
-      .NQ ( )
+    .NQ (dummyEN)
   );
   
 ////////////////////////////////////////////////////////////
@@ -155,12 +155,14 @@ module tt_um_example (
 
 ////////////////////////////////////////////////////////////
 // REG A
+   
+  wire [15:0] DUMMY2;
   Reg16bit REG_A(
     .D (M0),
     .RST (RST),
     .CLK (RW & ~REG1 & LDR & S | CNT16 & clk & ~LDR),
     .Q (Reg_A),
-      .NQ ( )
+    .NQ (DUMMY2)
     
   );
   
@@ -198,13 +200,13 @@ module tt_um_example (
 
 ////////////////////////////////////////////////////////////
 // REG B'
-  wire [15:0] Reg_B0;
+  wire [15:0] Reg_B0, DUMMY3;
   Reg16bit REG_B0(
     .D (SUM),
     .RST (RST),
     .CLK (CNT14),
     .Q (Reg_B0),
-      .NQ ( )
+    .NQ (DUMMY3)
     
   );
 
@@ -224,25 +226,26 @@ module tt_um_example (
   
 ////////////////////////////////////////////////////////////
 // REG B
+  wire [15:0] DUMMY4;
   Reg16bit REG_B (
     .D (M2),
     .RST (RST),
     .CLK (RW & REG1 & LDR & S | CNT16 & clk & ~LDR),
     .Q (Reg_B),
-      .NQ ( )
+    .NQ (DUMMY4)
   
   );
   
   
 ////////////////////////////////////////////////////////////
 // REG OF READ
-  wire [1:0] READ;
+  wire [1:0] READ, DUMMY5;
   Reg2bit REG_R (
     .D ({REG1,REG0}),
     .RST (RST),
     .CLK (S & ~RW),
     .Q (READ),
-      .NQ ( )
+    .NQ (DUMMY5)
   ); 
   
 
@@ -931,12 +934,12 @@ module R_edge (
   input wire I, RST, CLK,
   output wire O
 );
-  wire NQ;
+  wire NQ, dummy;
   D_Reg d(
     .D (I),
     .RST (RST),
     .CLK (CLK),
-      .Q ( ),
+    .Q (dummy),
     .NQ (NQ)
   );
   assign O = NQ & I;
@@ -953,13 +956,13 @@ module Change_Det (
   input wire I, E, RST, CLK,
   output wire ERR
 );
-  wire x2, x1,x0;
+  wire x2, x1,x0,dummy0, dummy1, dummy2;
   D_Reg delay(
     .D (~RST),
     .CLK (CLK),
     .RST (RST),
     .Q (x0),
-      .NQ ( )
+    .NQ (dummy0)
   );
   
   D_Reg last(
@@ -967,7 +970,7 @@ module Change_Det (
     .CLK (CLK),
     .RST (RST),
     .Q (x1),
-      .NQ ( )
+    .NQ (dummy1)
   );
   assign x2 = x1 ^- (I & E);
   
@@ -978,7 +981,7 @@ module Change_Det (
     .RST (~RST),
     .CLK (x2 & x0),
     .Q (ERR),
-      .NQ ( )
+    .NQ (dummy2)
   );
   
 endmodule
