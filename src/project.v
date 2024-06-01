@@ -35,12 +35,12 @@ module tt_um_example (
     .O (r_e_clk)
   );
   
-//  F_edge f_clk (
-//    .I (clk),
-//    .RST (RST),
-//    .CLK (clk),
-//    .O (f_e_clk)
-//  );
+  F_edge f_clk (
+    .I (clk),
+    .RST (RST),
+    .CLK (clk),
+    .O (f_e_clk)
+  );
 //////////////////////////////////////////////////////////////
 // RESET
   D_Reg Reset (
