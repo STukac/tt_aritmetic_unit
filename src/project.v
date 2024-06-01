@@ -673,7 +673,7 @@ module JK(
   input wire J, K, SET, RST, CLK,
   output wire Q, NQ
 );
-  reg Q0;
+  reg Q0 =1'b0;
   always @ (posedge CLK or negedge RST)
     begin
       if (~RST)
@@ -780,7 +780,7 @@ module D_Reg(
   input wire D, RST, CLK,
   output wire Q, NQ
 );
-  reg Q0;
+  reg Q0=1'b0;
   always @ (posedge CLK)
     begin 
       if (RST)
